@@ -1,0 +1,5 @@
+*.exe
+*.gdoc
+*.pdf
+/OldCode
+/.vscode
