@@ -12,12 +12,14 @@
 
 int main(int argC, char** argV){
     bool debug = false;
-    const char* portno = "51001";
+    std::string portno = "51001";
     if (argC > 0){
         for (int i = 1; i < argC; i++){
             if (strcmp(argV[i], "-d") == 0){
                 debug = true;
                 std::cout << "Debug Mode\n";
+            } else {
+                portno = argV[i];
             }
         }
     }

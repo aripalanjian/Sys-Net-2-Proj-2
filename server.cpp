@@ -106,7 +106,7 @@ void Server::serverThread(const SOCKET& socket) {
     struct timeval tv;
     tv.tv_sec = 30;
     tv.tv_usec = 0;
-    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
     while (connected) {
         std::string buffer(1024,'\0');
@@ -122,7 +122,7 @@ void Server::serverThread(const SOCKET& socket) {
                 std::cerr << "\nError: " << errno << "\n";
                 std::cout << duration  << "\n";
             }
-            if (duration >= 180){
+            if (duration >= 30){
                 connected = false;
                 std::cout << "Client Connection Timeout...\n";
             }
@@ -135,7 +135,7 @@ void Server::serverThread(const SOCKET& socket) {
             //Print Request contents
             if (debug) {
                 for (const std::pair<const std::string, std::string>& n : requestMap){
-                    std::cout << "Key:[" << n.first << "] Value:[" << n.second << "]\n";
+                    std::cout << "Key:[" << n.first << "] Value:[" << n.second.substr(0, n.second.rfind('\r')) << "]\n";
                 }
                 
             }

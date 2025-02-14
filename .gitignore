@@ -3,3 +3,7 @@
 *.pdf
 /OldCode
 /.vscode
+errReport.txt
+*.o
+server
+client
