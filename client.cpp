@@ -1,4 +1,6 @@
 #include "client.hpp"
+#include <sys/wait.h>
+#include <errno.h>
 
 Client::Client(bool debug, std::string portno){
     running = false;
@@ -16,13 +18,11 @@ Client::Client(bool debug, std::string portno){
 
 Client::~Client(){
     close(tcp_client_socket);
+    int status;
+    wait(&status);
 }
 
 void Client::run(){
-    std::string templatesPath;
-    std::string relativeTemplatesPath = "templates";
-    realpath(relativeTemplatesPath.data(), templatesPath.data());
-    char* args[] = {templatesPath.data()};
 
     std::cout << "  Options: \n    ls\t\t\t  list of html files found in templates"
                 << "\n    GET /<file_name>\t  show HTML code for give file"
@@ -40,32 +40,68 @@ void Client::run(){
         std::string input;
 
         while (running) {
+            std::cout << "client$ ";
             getline(std::cin, input);
 
             //Split input into request options
             std::stringstream ss{input};
             std::vector<std::string> request;
             for (std::string tmp{}; std::getline(ss, tmp, ' '); request.push_back(tmp)) {}
-            for(std::string s: request){
-                std::cout << s << " ";
-            }
-            std::cout << '\n';
-
-            if (request.at(0).compare("ls")){
-                
-                int child = fork();
-                if (child == 0) {
-                    std::cout << '\n';
-                    execvp("ls", args);
-                    std::cout << '\n';
+            if (debug) {
+                for(std::string s: request){
+                    std::cout << s << " ";
                 }
+                std::cout << '\n';
+            }
+
+            if (request.at(0).compare("exit") == 0){
+                running = false;
+            } else if (request.at(0).compare("ls") == 0){
+                int child = fork();
+                
+                std::string templatesPath;
+                std::string relativeTemplatesPath = "templates";
+                realpath(relativeTemplatesPath.data(), templatesPath.data());
+                
+                char* args[] = {relativeTemplatesPath.data()};
+                std::cout << "This is my pid: " << child << '\n';
+                if (child == 0) {                    
+                    std::cout << " **child** searching path: " << relativeTemplatesPath <<'\n';
+                    execvp("ls", args);
+                    // std::cout << '\n';
+                    exit(0);
+                }
+                sleep(1); //ensure input is on same line as prompt
             } else {
-                if (request.at(0).compare("GET")){
-                    // request.clear();
-                    // request = std::string("") + request.at(0) + request.at(1);// + DEFAULT_PROTOCOL;
+                if (request.at(0).compare("GET") == 0){
                     input += std::string(" ") + DEFAULT_PROTOCOL;
-                    send(tcp_client_socket, input.data(), input.size(), 0);
-                    recv(tcp_client_socket, buffer.data(), buffer.size(), 0);
+
+                    int conn = send(tcp_client_socket, input.data(), input.size(), 0);
+                    if (conn == -1){
+                        connection_status = connect(tcp_client_socket, reinterpret_cast<struct sockaddr *>(&tcp_server_address), sizeof(tcp_server_address));
+                        conn = send(tcp_client_socket, input.data(), input.size(), 0);
+                        if (connection_status == -1 || conn == -1){
+                            std::cout << "Error: Couldn't maintain server connection.";
+                            break;
+                        }
+                        
+                    }
+
+                    std::cout << "  Response: [\n    " ;
+                    std::string msg;
+                    while (true) {
+                        auto size = recv(tcp_client_socket, buffer.data(), buffer.size(), 0) > 0;
+                        if (size == 0) {
+                            msg += buffer;
+                            break;
+                        } else if (size == -1) {
+                            std::cout << "Error: " << strerror(errno);
+                        } else{
+                            msg += buffer;
+                        }
+                        std::cout << buffer;
+                    }
+                    std::cout << "\n  ]\n";
                 }
             }
         }

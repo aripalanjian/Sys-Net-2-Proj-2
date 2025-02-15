@@ -9,6 +9,8 @@
 #include <fstream>
 #include <unordered_map>
 #include <time.h>
+#include <cerrno>
+#include <cstring>
 // #include <stdlib.h>
 
 

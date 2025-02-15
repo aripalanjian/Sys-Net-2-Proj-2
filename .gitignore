@@ -4,6 +4,7 @@
 /OldCode
 /.vscode
 errReport.txt
+clientErrReport.txt
 *.o
 server
 client
