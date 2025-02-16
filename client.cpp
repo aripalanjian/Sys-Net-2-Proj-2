@@ -43,6 +43,8 @@ void Client::run(){
             std::cout << "client$ ";
             getline(std::cin, input);
 
+            if (input.compare("quit") == 0 || input.compare("exit") == 0) break;
+
             //Split input into request options
             std::stringstream ss{input};
             std::vector<std::string> request;
@@ -59,16 +61,15 @@ void Client::run(){
             } else if (request.at(0).compare("ls") == 0){
                 int child = fork();
                 
-                std::string templatesPath;
-                std::string relativeTemplatesPath = "templates";
-                realpath(relativeTemplatesPath.data(), templatesPath.data());
-                
-                char* args[] = {relativeTemplatesPath.data()};
-                std::cout << "This is my pid: " << child << '\n';
-                if (child == 0) {                    
-                    std::cout << " **child** searching path: " << relativeTemplatesPath <<'\n';
+                if (child == 0) {
+                    std::string relativeTemplatesPath = "templates";
+                    
+                    char* args[] = {"ls", relativeTemplatesPath.data()};
+                    
+                    if (debug)       
+                        std::cout << " **child** searching path: " << relativeTemplatesPath <<'\n';
+                    
                     execvp("ls", args);
-                    // std::cout << '\n';
                     exit(0);
                 }
                 sleep(1); //ensure input is on same line as prompt
@@ -77,6 +78,7 @@ void Client::run(){
                     input += std::string(" ") + DEFAULT_PROTOCOL;
 
                     int conn = send(tcp_client_socket, input.data(), input.size(), 0);
+                    std::cout << "Connection Error: " << conn << '\n';
                     if (conn == -1){
                         connection_status = connect(tcp_client_socket, reinterpret_cast<struct sockaddr *>(&tcp_server_address), sizeof(tcp_server_address));
                         conn = send(tcp_client_socket, input.data(), input.size(), 0);
@@ -90,7 +92,8 @@ void Client::run(){
                     std::cout << "  Response: [\n    " ;
                     std::string msg;
                     while (true) {
-                        auto size = recv(tcp_client_socket, buffer.data(), buffer.size(), 0) > 0;
+                        auto size = recv(tcp_client_socket, buffer.data(), buffer.size(), 0);
+                        std::cout << "Msg size: " << size << "\n";
                         if (size == 0) {
                             msg += buffer;
                             break;
@@ -108,8 +111,19 @@ void Client::run(){
     }
 }
 
-int main() {
-
-    Client c(false, "51002");
+int main(int argC, char** argV) {
+    bool debug = false;
+    std::string portno = "51002";
+    if (argC > 1){
+        for (int i = 1; i < argC; i++){
+            if (strcmp(argV[i], "-d") == 0){
+                debug = true;
+                std::cout << "Debug Mode\n";
+            } else {
+                portno = argV[i];
+            }
+        }
+    }
+    Client c(debug , portno);
     c.run();
 }

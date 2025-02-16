@@ -236,12 +236,6 @@ const std::string Server::formGetResponse(std::string uri, std::string protocol)
     std::string htmlContent = "";
     std::ifstream file;
     
-    // if (uri.compare("/fake.html") == 0){
-    //     response += " 404 Not Found\nContent-Type: text/html\nConnection: keep-alive\nContent-Length: ";
-    //     htmlContent = std::string("<HTML><HEAD><TITLE>WHOOPS</TITLE><link rel=\"icon\" href=\"data:,\"></HEAD>")
-    //         +"<BODY BGCOLOR=\"#99cc99\" TEXT=\"#000000\" LINK=\"#2020ff\" VLINK=\"#4040cc\">"
-    //         +"<h1>404 Not Found</h1></BODY></HTML>";
-    // } else 
     if (uri.compare("/testPresence.html") == 0){
         response += " 200 OK\nContent-Type: text/html\nContent-Length: ";
         file.open("templates/testPresence.html");

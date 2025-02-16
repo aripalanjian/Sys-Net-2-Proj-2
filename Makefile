@@ -24,5 +24,6 @@ clean:
 	rm -f server $(server_objects)
 	rm -f client $(client_objects)
 	rm -f errReport.txt
+	rm -f clientErrReport.txt
 	rm -f serverlog.txt
 	rm -f serverlog_win.txt
