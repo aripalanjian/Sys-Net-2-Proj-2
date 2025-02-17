@@ -104,7 +104,7 @@ void Server::serverThread(const SOCKET& socket) {
 
     //Reduce recv() timeout to 30s
     struct timeval tv;
-    tv.tv_sec = 30;
+    tv.tv_sec = 10;
     tv.tv_usec = 0;
     setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
@@ -122,7 +122,7 @@ void Server::serverThread(const SOCKET& socket) {
                 std::cerr << "\nError: " << errno << "\n";
                 std::cout << duration  << "\n";
             }
-            if (duration >= 30){
+            if (duration >= 200){
                 connected = false;
                 std::cout << "Client Connection Timeout...\n";
             }

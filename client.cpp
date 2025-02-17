@@ -1,6 +1,4 @@
 #include "client.hpp"
-#include <sys/wait.h>
-#include <errno.h>
 
 Client::Client(bool debug, std::string portno){
     running = false;
@@ -24,91 +22,138 @@ Client::~Client(){
 
 void Client::run(){
 
-    std::cout << "  Options: \n    ls\t\t\t  list of html files found in templates"
-                << "\n    GET /<file_name>\t  show HTML code for give file"
-                << "\n    POST <message>\t  send message to server\n\n";
-    // execvp("ls", args);
-    
     int connection_status = connect(tcp_client_socket, reinterpret_cast<struct sockaddr *>(&tcp_server_address), sizeof(tcp_server_address));     //params: which socket, cast for address to the specific structure type, size of address
     if (connection_status == -1) {                                                                                         //return value of 0 means all okay, -1 means a problem
-        std::cout << "Problem connecting to the socket! Sorry!! \n";
-    } else {
-        //start client loop
-        running = true;
-        std::string buffer(1024,'\0');
-        std::string request;
-        std::string input;
+        std::cout << "Error connecting to the socket: " << errno << '\n';
+        std::cout << "Server may not be running...";
+        exit(1);
+    }
 
-        while (running) {
-            std::cout << "client$ ";
-            getline(std::cin, input);
+    std::cout << "  Options: \n    ls\t\t\t  list of html files found in templates"
+                << "\n    GET /<file_name>\t  show HTML code for a given file"
+                << "\n    POST <message>\t  send message to server"
+                << "\n    exit\t          close client\n\n";
+    
 
-            if (input.compare("quit") == 0 || input.compare("exit") == 0) break;
+    //start client loop
+    running = true;
+    std::string request;
+    std::string input;
 
-            //Split input into request options
-            std::stringstream ss{input};
-            std::vector<std::string> request;
-            for (std::string tmp{}; std::getline(ss, tmp, ' '); request.push_back(tmp)) {}
-            if (debug) {
-                for(std::string s: request){
-                    std::cout << s << " ";
-                }
-                std::cout << '\n';
-            }
+    while (running) {
+        std::cout << "client$ ";
+        getline(std::cin, input);
 
-            if (request.at(0).compare("exit") == 0){
-                running = false;
-            } else if (request.at(0).compare("ls") == 0){
-                int child = fork();
+        if (input.compare("quit") == 0 || input.compare("exit") == 0){ //Immediately exit before executing any more instructions
+            running = false;
+            std::string request = "POST / HTTP/1.1\r\nquit: exit\r\n";
+            send(tcp_client_socket, request.data(), request.size(), 0);
+            break;
+        }
+
+        
+        std::vector<std::string> request;
+        parseRequest(input, request);
+        
+
+        //React Based on user input
+        if (request.at(0).compare("ls") == 0){
+            if (debug) std::cout << "Attempting to display templates contents...\n";
+            int child = fork();
+                    
+            if (child == 0) {
+                std::string relativeTemplatesPath = "templates";
+                char cmd[] = "ls";
+                char* args[] = {request.at(0).data(), relativeTemplatesPath.data()};
                 
-                if (child == 0) {
-                    std::string relativeTemplatesPath = "templates";
-                    
-                    char* args[] = {"ls", relativeTemplatesPath.data()};
-                    
-                    if (debug)       
-                        std::cout << " **child** searching path: " << relativeTemplatesPath <<'\n';
-                    
-                    execvp("ls", args);
-                    exit(0);
-                }
-                sleep(1); //ensure input is on same line as prompt
+                if (debug) std::cout << " **child** searching path: " << relativeTemplatesPath <<'\n';
+                execvp(request.at(0).data(), args);
+                exit(0);
+            }
+            sleep(1); //ensure input is on same line as prompt
+            // clientLsExec();
+        } else {
+            if (request.at(0).compare("GET") == 0){
+                clientGetResponse(input);
+            } else if (request.at(0).compare("POST") == 0){
+                clientPostResponse(input.substr(input.find(' ')));
             } else {
-                if (request.at(0).compare("GET") == 0){
-                    input += std::string(" ") + DEFAULT_PROTOCOL;
-
-                    int conn = send(tcp_client_socket, input.data(), input.size(), 0);
-                    std::cout << "Connection Error: " << conn << '\n';
-                    if (conn == -1){
-                        connection_status = connect(tcp_client_socket, reinterpret_cast<struct sockaddr *>(&tcp_server_address), sizeof(tcp_server_address));
-                        conn = send(tcp_client_socket, input.data(), input.size(), 0);
-                        if (connection_status == -1 || conn == -1){
-                            std::cout << "Error: Couldn't maintain server connection.";
-                            break;
-                        }
-                        
-                    }
-
-                    std::cout << "  Response: [\n    " ;
-                    std::string msg;
-                    while (true) {
-                        auto size = recv(tcp_client_socket, buffer.data(), buffer.size(), 0);
-                        std::cout << "Msg size: " << size << "\n";
-                        if (size == 0) {
-                            msg += buffer;
-                            break;
-                        } else if (size == -1) {
-                            std::cout << "Error: " << strerror(errno);
-                        } else{
-                            msg += buffer;
-                        }
-                        std::cout << buffer;
-                    }
-                    std::cout << "\n  ]\n";
-                }
+                std::cout << request.at(0) << ": command not recognized\n";
             }
         }
     }
+}
+
+void Client::parseRequest(const std::string & input, std::vector<std::string> &request){
+    //Split input into request options
+    std::stringstream ss{input};
+    for (std::string tmp{}; std::getline(ss, tmp, ' '); request.push_back(tmp)) {}
+    if (debug) {
+        std::cout << "**Client Log** User Input: ";
+        for(std::string s: request){
+            std::cout << s << " ";
+        }
+        std::cout << '\n';
+    }
+}
+
+bool Client::clientGetResponse(std::string input){
+    input += std::string(" ") + DEFAULT_PROTOCOL;
+
+    ssize_t conn = send(tcp_client_socket, input.data(), input.size(), 0);
+
+    if (debug) std::cout << "**Client Log** Send size: " << conn << '\n';
+    
+    if (conn == -1){
+        std::cout << "Error: Couldn't maintain server connection.";
+        return false;
+    }
+
+    std::cout << "**Client**\n  Server Response: [\n    " ;
+    std::string msg;
+
+    //Loop to receive full message from server
+    while (true) {
+        std::string buffer(1024,'\0');
+        auto size = recv(tcp_client_socket, buffer.data(), buffer.size(), 0);
+        if (debug) std::cout << "\n**Client Log** Msg size: " << size << "\n";
+
+        msg += buffer;
+        
+        if (size < buffer.size()) {
+            break;
+        } else if (size == -1) {
+            std::cout << "Error: " << strerror(errno);
+        }
+    }
+    std::cout << msg;
+    std::cout << "\n  ]\n";
+
+    return true;
+}
+
+void Client::clientPostResponse(std::string message){
+    std::string request = "POST / HTTP/1.1\r\nclient-message: "+ message + "\r\n";
+    if (debug) std::cout << "**Client Log** Request format: \n" << request << '\n';
+    send(tcp_client_socket, request.data(), request.size(), 0);
+
+    //Loop to receive full message from server
+    while (true) {
+        std::string buffer(1024,'\0');
+        auto size = recv(tcp_client_socket, buffer.data(), buffer.size(), 0);
+        if (debug) std::cout << "\n**Client Log** Msg size: " << size << "\n";
+
+        if (size < buffer.size()) {
+            break;
+        } else if (size == -1) {
+            std::cout << "Error: " << strerror(errno);
+        }
+    }
+
+}
+
+void Client::clientLsExec(){
+    
 }
 
 int main(int argC, char** argV) {

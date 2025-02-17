@@ -11,6 +11,9 @@
 #include <time.h>
 #include <cerrno>
 #include <cstring>
+
+#include <sys/wait.h>
+#include <errno.h>
 // #include <stdlib.h>
 
 
@@ -34,6 +37,11 @@ public:
     ~Client();
 
     void run();
+
+    void parseRequest(const std::string &input, std::vector<std::string> &);
+    bool clientGetResponse(std::string input);
+    void clientPostResponse(std::string message);
+    void clientLsExec();
 };
 
 #endif
