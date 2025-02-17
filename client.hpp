@@ -1,3 +1,11 @@
+/***************************************************************
+  Student Name: Ari Palanjian
+  Class Name: Systems and Networks II
+  Project 2
+
+  Client Header class definition
+***************************************************************/
+
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 

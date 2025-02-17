@@ -1,3 +1,10 @@
+/***************************************************************
+  Student Name: Ari Palanjian
+  Class Name: Systems and Networks II
+  Project 2
+
+  Client class method definitions
+***************************************************************/
 #include "client.hpp"
 
 Client::Client(bool debug, std::string portno){

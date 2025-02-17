@@ -1,7 +1,7 @@
 /***************************************************************
   Student Name: Ari Palanjian
   Class Name: Systems and Networks II
-  Project 1
+  Project 2
 
   Server Method definitions file: Creates and binds a socket to
   then listen for a browser connection. The program then reacts

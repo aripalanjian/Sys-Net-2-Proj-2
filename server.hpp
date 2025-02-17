@@ -1,7 +1,7 @@
 /***************************************************************
   Student Name: Ari Palanjian
   Class Name: Systems and Networks II
-  Project 1
+  Project 2
 
   Server Header file to define Server class
 ***************************************************************/
