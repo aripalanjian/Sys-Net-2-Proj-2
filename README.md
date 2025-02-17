@@ -1,10 +1,10 @@
 # Systems and Networks II
 
-## Project 1
+## Project 2
 
 Contributors: Ari Palanjian
 
-* Note: This program was developed using WSL and tested using the Google Chrome Browser
+* Note: This program was developed using WSL and tested using a second WSL terminal instance.
 
 ## Included Files
 
@@ -20,6 +20,8 @@ Contributors: Ari Palanjian
 - templates
     - index.html
     - testPresence.html
+- client.cpp
+- client.hpp
 - main.cpp
 - Makefile
 - protocol.pdf
@@ -29,37 +31,25 @@ Contributors: Ari Palanjian
 
 ## How to Run
 1. Compile program by entering ```make``` in CLI in the same directory as main.
-2. Execute the program by running ```./server <portno>```.
-3. In a new browser tab type ```localhost:<portno>```.
+2. Execute the server by entering the command ```./server <portno>```.
+3. Execute the client by entering the command ```./client <portno>```.
 
 ## Usage
-- Upon entering the address in the browser a get request is sent to the server for /index.html.
-- From the homepage you may follow either hyperlinks, enter a message, close the client connection, or close the server.
+- Upon starting the client you will be presented with the available options
+- When finished enter the command exit to leave the client
+- In the terminal where the server is running press the keys Ctrl and C
 
-![Homepage](assets/screencaps/homepage.png?raw=true)
+## Example Run
 
-- Clicking on the "Click on this link for an image. " hyperlink redirects to /testPresence.html.
+![Starting Server and Client](assets/screencaps/sampleOutput1.png?raw=true)
 
-![TestPresence](assets/screencaps/picture.png?raw=true)
+- Starting Server and Client,running ls command, and client message to server
 
-- Clicking on the "click here to test the non-existent link " hyperlink redirects to a 404 page.
-- Any other GET request other than those outlined in the protocol document will also lead to a 404.
+![Sample Get Request Output](assets/screencaps/sampleOutputGet.png?raw=true)
 
-![404NotFound](assets/screencaps/404notfound.png?raw=true)
+- Sample get request for index.html
 
-- The browser client may send a text message to the server which will then print the message to the screen.
+![Sample Incorrect Start and Exit command](assets/screencaps/sampleOutputExit.png?raw=true)
 
-![ClientMessage](assets/screencaps/clientmessage.png?raw=true)
-
-- The user may also end the client connection or close the server using the buttons provided resulting in the browser displaying an ERR_EMPTY_RESPONSE.
-
-![NotWorking](assets/screencaps/clientclose.png?raw=true)
-
-* Note: The process will close the client connection after 180 seconds if nothing has been recieved from the server and will remain open for new connections.
-
-## Example Server Run
-
-- The following image shows what the server output may look like depending on the order of actions taken.
-
-![ExRun](assets/screencaps/exrun.png?raw=true)
+- Sample run if client/server started in incorrect order, and use of exit command
 
