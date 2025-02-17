@@ -25,7 +25,7 @@ void Client::run(){
     int connection_status = connect(tcp_client_socket, reinterpret_cast<struct sockaddr *>(&tcp_server_address), sizeof(tcp_server_address));     //params: which socket, cast for address to the specific structure type, size of address
     if (connection_status == -1) {                                                                                         //return value of 0 means all okay, -1 means a problem
         std::cout << "Error connecting to the socket: " << errno << '\n';
-        std::cout << "Server may not be running...";
+        std::cout << "Server may not be running...\n";
         exit(1);
     }
 
@@ -60,18 +60,17 @@ void Client::run(){
         if (request.at(0).compare("ls") == 0){
             if (debug) std::cout << "Attempting to display templates contents...\n";
             int child = fork();
-                    
+            if (debug) std::cout << "Pid: " << child << '\n';
             if (child == 0) {
                 std::string relativeTemplatesPath = "templates";
                 char cmd[] = "ls";
-                char* args[] = {request.at(0).data(), relativeTemplatesPath.data()};
+                char* args[] = {cmd, relativeTemplatesPath.data()};
                 
                 if (debug) std::cout << " **child** searching path: " << relativeTemplatesPath <<'\n';
-                execvp(request.at(0).data(), args);
+                execvp(cmd, args);
                 exit(0);
             }
             sleep(1); //ensure input is on same line as prompt
-            // clientLsExec();
         } else {
             if (request.at(0).compare("GET") == 0){
                 clientGetResponse(input);
@@ -150,10 +149,6 @@ void Client::clientPostResponse(std::string message){
         }
     }
 
-}
-
-void Client::clientLsExec(){
-    
 }
 
 int main(int argC, char** argV) {
